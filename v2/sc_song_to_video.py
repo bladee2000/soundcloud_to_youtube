@@ -8,6 +8,7 @@ import shutil
 from soundcloud import SoundCloud, BasicTrack, MiniTrack
 from scdl import scdl
 from pathvalidate import sanitize_filename
+import mutagen
 
 def get_image(track: BasicTrack, path):
     url = track.artwork_url.replace("large", "t500x500")
@@ -48,25 +49,52 @@ def main(url):
         video_path = make_video_only_track(temp_path, item)
         track_youtube_upload(item, video_path)
     if item.kind == "playlist":
-        pass
+        playlist_name = sanitize_filename(item.title)
+        item = get_track_list(item, client)
+        change_mp3_filename(f"./{temp_path}/{playlist_name}", item, temp_path)
 
+        for track in item.tracks:
+            make_video_only_track(temp_path, track, True)
+
+        video_list = open(f"./{temp_path}/videos.txt", "w")
+        for track in item.tracks:
+            video_list.write(f"file '{track.id}.mkv'\n")
+        video_list.close()
+
+        os.system(rf'ffmpeg -safe 0 -f concat -i "{temp_path}\videos.txt" "{temp_path}\output.mkv"')
 
 def get_track_list(item, client):
     for i in range(len(item.tracks)):
         if isinstance(item.tracks[i], MiniTrack):
             item.tracks[i] = client.get_track(item.tracks[i].id)
+    return item
 
-def make_video_only_track(temp_path, track: BasicTrack):
+
+def change_mp3_filename(path, item, temp_path):
+    file_list = os.listdir(path)
+
+    for file in file_list:
+        metadata = mutagen.File(f"{path}/{file}")
+        track_number = int(str(metadata['TRCK']))
+        after_filename = f"./{temp_path}/{item.tracks[track_number - 1].id}.mp3"
+        os.rename(f"{path}/{file}", after_filename)
+
+
+def make_video_only_track(temp_path, track: BasicTrack, is_playlist: bool = False):
     get_image(track, temp_path)
 
     mp3_filename = scdl.limit_filename_length(track.title, ".mp3")
     mp3_filename = sanitize_filename(mp3_filename)
+
+    if is_playlist:
+        mp3_filename = f"{track.id}.mp3"
 
     os.system(rf'ffmpeg -loop 1 -framerate 2 -i "{temp_path}\{track.id}.jpg" -i "{temp_path}\{mp3_filename}" ' +
               rf'-c:v libx264 -preset medium -tune stillimage -crf 18 -c:a copy -shortest -pix_fmt yuv420p ' +
               rf'"{temp_path}\{track.id}.mkv"')
 
     return rf"{temp_path}\{track.id}.mkv"
+
 
 if __name__ == '__main__':
     while True:
