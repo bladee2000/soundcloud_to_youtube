@@ -5,10 +5,12 @@ import urllib.request
 import json
 import random
 import shutil
-from soundcloud import SoundCloud, BasicTrack, MiniTrack
+from soundcloud import SoundCloud, BasicTrack, MiniTrack, AlbumPlaylist
 from scdl import scdl
 from pathvalidate import sanitize_filename
 import mutagen
+import upload_video
+
 
 def get_image(track: BasicTrack, path):
     url = track.artwork_url
@@ -24,19 +26,64 @@ def delete(path):
         shutil.rmtree(path)
 
 
-def track_youtube_upload(item: BasicTrack, video_path):
+def video_youtube_upload(item, video_path):
     answer = input("upload on youtube? \n (Y/N) : ")
     if answer == "Y" or answer == "y":
-        youtube_title = f"{item.user.username} - {item.title}"
+        youtube_title = ""
+        VALID_PRIVACY_STATUSES = ("public", "private", "unlisted")
+
+        if item.kind == "track":
+            youtube_title = f"{item.user.username} - {item.title}"
+        if item.kind == "playlist":
+            if item.set_type == "":
+                youtube_title += "[Playlist]"
+            if item.set_type == "album":
+                youtube_title += "[Album]"
+            if item.set_type == "compilation":
+                youtube_title += "[Compilation]"
+            youtube_title += f" {item.user.username} - {item.title}"
 
         if len(youtube_title) > 100:
             youtube_title = youtube_title[:100]
         print(youtube_title)
 
-        result = os.popen(rf'python upload_video.py --file="{video_path}"  --title="{youtube_title}"'
-                          f' --description="{item.permalink_url}"  --keywords=" " --category="22" --privacyStatus="public"').read()
-        print(result)
+        description = youtube_description(item)
+        print(description)
 
+        upload_video.run(video_path, youtube_title, description, "10", VALID_PRIVACY_STATUSES[1])
+
+
+
+def youtube_description(item: AlbumPlaylist):
+    if item.kind == "track":
+        date = item.display_date[:10]
+        text = f"{item.permalink_url}\n\nRelease on : {date}"
+        return text
+
+    if item.kind == "playlist":
+        text = f"{item.permalink_url}\n\n\n"
+        current_time = 0
+
+        for track in item.tracks:
+            h = int(int(int(current_time / 1000) / 60) / 60)
+            m = int(int(current_time / 1000) / 60) - h * 60
+            s = int(current_time / 1000) - m * 60
+
+            if h < 10:
+                h = f"0{h}"
+            if m < 10:
+                m = f"0{m}"
+            if s < 10:
+                s = f"0{s}"
+
+            if int(item.duration / 1000) >= 3600:
+                text += f"{h}:{m}:{s} {track.title}\n"
+            else:
+                text += f"{m}:{s} {track.title}\n"
+
+            current_time += track.duration
+
+        return text
 
 def main(url):
     r = str(random.random())
@@ -50,7 +97,7 @@ def main(url):
 
     if item.kind == "track":
         video_path = make_video_only_track(temp_path, item)
-        track_youtube_upload(item, video_path)
+        video_youtube_upload(item, video_path)
     if item.kind == "playlist":
         playlist_name = sanitize_filename(item.title)
         item = get_track_list(item, client)
@@ -66,6 +113,8 @@ def main(url):
 
         os.system(rf'ffmpeg -safe 0 -f concat -i "{temp_path}\videos.txt"'
                   rf' -max_interleave_delta 0 -c copy "{temp_path}\output.mkv"')
+
+        video_youtube_upload(item, rf"{temp_path}\output.mkv")
 
 def get_track_list(item, client):
     for i in range(len(item.tracks)):
