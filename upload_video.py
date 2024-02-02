@@ -157,7 +157,8 @@ def resumable_upload(insert_request):
       print(("Sleeping %f seconds and then retrying..." % sleep_seconds))
       time.sleep(sleep_seconds)
 
-if __name__ == '__main__':
+
+def run(file, title, description, category, privacyStatus):
   argparser.add_argument("--file", required=True, help="Video file to upload")
   argparser.add_argument("--title", help="Video title", default="Test Title")
   argparser.add_argument("--description", help="Video description",
@@ -168,7 +169,11 @@ if __name__ == '__main__':
   argparser.add_argument("--keywords", help="Video keywords, comma separated",
     default="")
   argparser.add_argument("--privacyStatus", choices=VALID_PRIVACY_STATUSES,
-    default=VALID_PRIVACY_STATUSES[0], help="Video privacy status.")
+    default=VALID_PRIVACY_STATUSES[1], help="Video privacy status.")
+
+  sys.argv = ["upload_video.py", "--file", file, "--title", title,
+              "--description", description, "--category", category, "--privacyStatus", privacyStatus]
+
   args = argparser.parse_args()
 
   if not os.path.exists(args.file):
@@ -179,3 +184,4 @@ if __name__ == '__main__':
     initialize_upload(youtube, args)
   except HttpError as e:
     print(("An HTTP error %d occurred:\n%s" % (e.resp.status, e.content)))
+
