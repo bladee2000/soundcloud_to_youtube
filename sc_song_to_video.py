@@ -3,7 +3,7 @@ import urllib.request
 import shutil
 import random
 from soundcloud import SoundCloud, BasicTrack, MiniTrack
-from scdl import scdl_edit
+from scdl_v275 import scdl_edit
 from pathvalidate import sanitize_filename
 import mutagen
 import upload_video
@@ -17,7 +17,7 @@ def get_image(track: BasicTrack, path):
         url = track.user.avatar_url
     url = url.replace("large", "t500x500")
     print(url)
-
+    print(os.getcwd())
     try:
         urllib.request.urlretrieve(url, os.getcwd() + rf'\{path}\{track.id}.jpg')
     except urllib.error.HTTPError:

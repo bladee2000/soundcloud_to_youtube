@@ -26,7 +26,7 @@ from .resource.like import PlaylistLike, TrackLike
 from .resource.message import Message
 from .resource.playlist import AlbumPlaylist, BasicAlbumPlaylist
 from .resource.track import BasicTrack, Track
-from .resource.user import User
+from .resource.user import User, UserStatus
 from .resource.web_profile import WebProfile
 
 T = TypeVar("T")
@@ -122,9 +122,7 @@ class SoundCloud:
         Checks if current client_id is valid
         """
         try:
-            next(
-                self.requests["tag_recent_tracks"](tag="electronic", limit="1", use_auth=False)
-            )
+            self.requests["track"](track_id=1032303631, use_auth=False)
             return True
         except HTTPError as err:
             if err.response.status_code == 401:
@@ -137,7 +135,7 @@ class SoundCloud:
         Checks if current auth_token is valid
         """
         try:
-            self.requests["me"](auth_token=self.auth_token)
+            self.requests["me"]()
             return True
         except HTTPError as err:
             if err.response.status_code == 401:
@@ -145,7 +143,7 @@ class SoundCloud:
             else:
                 raise
     
-    def get_me(self) -> User:
+    def get_me(self) -> UserStatus:
         """
         Gets the user associated with client's auth token
         """
@@ -197,7 +195,7 @@ class SoundCloud:
         
     def get_tag_tracks_recent(self, tag: str, **kwargs) -> Generator[Track, None, None]:
         """
-        Get most recent tracks for this tag
+        Get most recent tracks for this tag. Might be obsolete?
         """
         return self.requests["tag_recent_tracks"](tag=tag, **kwargs)
         
@@ -430,10 +428,7 @@ class Request(Generic[T]):
         else:
             return self.return_type.from_dict(d)
         raise ValueError(f"Could not convert {d} to type {self.return_type}")
-        # return d
-        # 트랙스테이션은 안됌 api에서는 정보가 받아와지는데 패키지에서 대응하는 클래스를 안만들어놓음
-        # dict으로 출력은 가능
-
+    
     def __call__(self, use_auth=True, **kwargs) -> Optional[T]:
         """
         Requests the resource at the given url with
