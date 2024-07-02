@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import List, Optional
 
 from soundcloud.resource.base import BaseData
-from soundcloud.resource.user import BasicUser
+
 
 @dataclass
 class BaseItem(BaseData):
@@ -33,7 +33,7 @@ class BaseItem(BaseData):
     uri: str
     user_id: int
     display_date: str
-    
+
     def get_all_tags(self) -> List[str]:
         tags = []
         if self.genre:

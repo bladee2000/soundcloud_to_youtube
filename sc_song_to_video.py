@@ -3,7 +3,7 @@ import urllib.request
 import shutil
 import random
 from soundcloud import SoundCloud, BasicTrack, MiniTrack
-from scdl_v275 import scdl_edit
+from scdl_v295 import scdl_edit
 from pathvalidate import sanitize_filename
 import mutagen
 import upload_video
@@ -153,7 +153,8 @@ def main(url):
     os.chdir('..')
     print(os.getcwd())
 
-    client = SoundCloud("a3e059563d7fd3372b49b37f00a00bcf")
+    client = SoundCloud()
+
     item = client.resolve(url)
 
     if item.kind == "track":
