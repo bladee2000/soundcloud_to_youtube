@@ -19,11 +19,11 @@ def get_image(track: BasicTrack, path):
     print(url)
     print(os.getcwd())
     try:
-        urllib.request.urlretrieve(url, os.getcwd() + rf'\{path}\{track.id}.jpg')
+        urllib.request.urlretrieve(url, os.getcwd() + rf'/{path}/{track.id}.jpg')
     except urllib.error.HTTPError:
         url = track.user.avatar_url
         url = url.replace("large", "t500x500")
-        urllib.request.urlretrieve(url, os.getcwd() + rf'\{path}\{track.id}.jpg')
+        urllib.request.urlretrieve(url, os.getcwd() + rf'/{path}/{track.id}.jpg')
 
 def delete(path):
     answer = input("delete file? \n (Y/N) : ")
@@ -173,10 +173,10 @@ def main(url):
             video_list.write(f"file '{track.id}.mkv'\n")
         video_list.close()
 
-        subprocess.run(rf'ffmpeg -safe 0 -f concat -i "{temp_path}\videos.txt"'
-                       rf' -max_interleave_delta 0 -c copy "{temp_path}\output.mkv"', shell=True)
+        subprocess.run(rf'ffmpeg -safe 0 -f concat -i "{temp_path}/videos.txt"'
+                       rf' -max_interleave_delta 0 -c copy "{temp_path}/output.mkv"', shell=True)
 
-        video_youtube_upload(item, rf"{temp_path}\output.mkv")
+        video_youtube_upload(item, rf"{temp_path}/output.mkv")
 
     delete(temp_path)
 
@@ -206,11 +206,11 @@ def make_video_only_track(temp_path, track: BasicTrack, is_playlist: bool = Fals
     if is_playlist:
         mp3_filename = f"{track.id}.mp3"
 
-    subprocess.run(rf'ffmpeg -loop 1 -framerate 2 -i "{temp_path}\{track.id}.jpg" -i "{temp_path}\{mp3_filename}" ' +
+    subprocess.run(rf'ffmpeg -loop 1 -framerate 2 -i "{temp_path}/{track.id}.jpg" -i "{temp_path}/{mp3_filename}" ' +
                    rf'-c:v libx264 -preset medium -tune stillimage -t "{track.duration}ms" -crf 18 -c:a copy -shortest -pix_fmt yuv420p ' +
-                   rf'"{temp_path}\{track.id}.mkv"', shell=True)
+                   rf'"{temp_path}/{track.id}.mkv"', shell=True)
 
-    return rf"{temp_path}\{track.id}.mkv"
+    return rf"{temp_path}/{track.id}.mkv"
 
 
 if __name__ == '__main__':
