@@ -201,7 +201,9 @@ def make_video_only_track(temp_path, track: BasicTrack, is_playlist: bool = Fals
     get_image(track, temp_path)
 
     mp3_filename = scdl_edit.limit_filename_length(track.title, ".mp3")
-    mp3_filename = scdl_edit.sanitize_str(mp3_filename)
+    mp3_filename = sanitize_filename(mp3_filename, replacement_text="�", max_len=255)
+
+    print(f"mp3 filename : {mp3_filename}")
 
     if is_playlist:
         mp3_filename = f"{track.id}.mp3"
