@@ -208,7 +208,12 @@ def make_video_only_track(temp_path, track: BasicTrack, is_playlist: bool = Fals
     if is_playlist:
         mp3_filename = f"{track.id}.mp3"
 
-    subprocess.run(rf'ffmpeg -loop 1 -framerate 2 -i "{temp_path}/{track.id}.jpg" -i "{temp_path}/{mp3_filename}" ' +
+    print(f"{track.duration}ms")
+    padding_option = ''
+    if int(track.duration) > 60000 or is_playlist:
+        padding_option = '-vf "scale=720x1280,pad=ih*9/16:ih:(ow-iw)/2:(oh-ih)/2"'
+
+    subprocess.run(rf'ffmpeg -loop 1 -framerate 2 -i "{temp_path}/{track.id}.jpg" -i "{temp_path}/{mp3_filename}" {padding_option} ' +
                    rf'-c:v libx264 -preset medium -tune stillimage -t "{track.duration}ms" -crf 18 -c:a copy -shortest -pix_fmt yuv420p ' +
                    rf'"{temp_path}/{track.id}.mkv"', shell=True)
 
